@@ -45,11 +45,16 @@ app.get('/api/list', (req, res) => {
 });
 
 // 4. API: Convert
+const WATERMARK_PATH = path.join(BASE_DIR, 'water-mark-logo.png');
+
 app.post('/api/convert', async (req, res) => {
     const { name, selectedImages } = req.body;
     const targetDir = path.join(BASE_DIR, name);
 
     if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir);
+
+    // Check if watermark exists
+    const hasWatermark = fs.existsSync(WATERMARK_PATH);
 
     const jsonOutput = await Promise.all(selectedImages.map(async (item, i) => {
         const ext = path.extname(item.fileName);
@@ -63,9 +68,29 @@ app.post('/api/convert', async (req, res) => {
 
         const src = path.join(SOURCE_FOLDER, item.fileName);
 
-        await sharp(src).resize({ width: 1000 }).toFile(path.join(targetDir, names.main));
-        await sharp(src).resize({ width: 500 }).toFile(path.join(targetDir, names.thumb));
-        await sharp(src).resize({ width: 100 }).toFile(path.join(targetDir, names.icon));
+        // 1. Create the Main 1000px image with Watermark
+        let mainImageProcessor = sharp(src).resize({ width: 1000 });
+
+        if (hasWatermark) {
+            // gravity: 'southeast' puts it in the bottom right automatically
+            mainImageProcessor = mainImageProcessor.composite([
+                { 
+                    input: WATERMARK_PATH, 
+                    gravity: 'southeast' 
+                }
+            ]);
+        }
+        await mainImageProcessor.toFile(path.join(targetDir, names.main));
+
+        // 2. Create Thumbnail (500px) - No watermark
+        await sharp(src)
+            .resize({ width: 500 })
+            .toFile(path.join(targetDir, names.thumb));
+
+        // 3. Create Icon (100px) - No watermark
+        await sharp(src)
+            .resize({ width: 100 })
+            .toFile(path.join(targetDir, names.icon));
 
         return {
             image: `${name}/${names.main}`,
