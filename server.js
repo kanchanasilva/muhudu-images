@@ -20,8 +20,22 @@ app.get('/', (req, res) => {
     res.send(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8'));
 });
 
-// 2. Serve the images so the UI can preview them
-app.use('/preview', express.static(SOURCE_FOLDER));
+// Replace the old app.use('/preview', ...) with this:
+app.get('/preview/:filename', async (req, res) => {
+    const filePath = path.join(SOURCE_FOLDER, req.params.filename);
+    
+    try {
+        // We resize the image to a 300px thumbnail on-the-fly for the UI
+        const buffer = await sharp(filePath)
+            .resize(300) 
+            .toBuffer();
+            
+        res.set('Content-Type', 'image/jpeg'); // Standardize for preview
+        res.send(buffer);
+    } catch (err) {
+        res.status(404).send('Image not found');
+    }
+});
 
 // 3. API: List images
 app.get('/api/list', (req, res) => {
