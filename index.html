@@ -6,12 +6,38 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-        .card { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; }
-        input { width: 100%; margin-top: 5px; box-sizing: border-box; }
-        .controls { margin-bottom: 20px; background: white; padding: 20px; border-radius: 8px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #eceff1; color: #333; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        
+        .card { 
+            background: white; padding: 12px; border-radius: 10px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;
+            border: 3px solid transparent;
+        }
+        .card.selected { border-color: #4caf50; background: #f1f8e9; }
+        
+        .card img { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; cursor: pointer; }
+        
+        .checkbox-container { margin: 10px 0; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .checkbox-container input { width: 18px; height: 18px; cursor: pointer; }
+
+        input[type="text"], input[type="number"], input[type="month"] { 
+            width: 100%; margin-top: 8px; padding: 6px; box-sizing: border-box; 
+            border: 1px solid #ccc; border-radius: 4px; 
+        }
+
+        .controls { 
+            position: sticky; top: 0; z-index: 100;
+            margin-bottom: 30px; background: white; padding: 20px; 
+            border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex; align-items: center; gap: 15px;
+        }
+        
+        .btn-convert { 
+            background: #2196f3; color: white; border: none; 
+            padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold;
+        }
+        .btn-convert:hover { background: #1976d2; }
     </style>
 </head>
 <body>
@@ -20,42 +46,89 @@
     <script type="text/babel">
         function App() {
             const [images, setImages] = React.useState([]);
-            const [form, setForm] = React.useState({});
+            const [form, setForm] = React.useState({}); // Stores data for ALL images
+            const [selectedFiles, setSelectedFiles] = React.useState([]); // Tracks which are checked
             const [name, setName] = React.useState('');
 
             React.useEffect(() => {
                 fetch('/api/list').then(r => r.json()).then(setImages);
             }, []);
 
-            const update = (file, key, val) => {
-                setForm(prev => ({ ...prev, [file]: { ...prev[file], [key]: val, fileName: file } }));
+            const toggleSelection = (file) => {
+                setSelectedFiles(prev => 
+                    prev.includes(file) ? prev.filter(f => f !== file) : [...prev, file]
+                );
+            };
+
+            const updateField = (file, key, val) => {
+                setForm(prev => ({ 
+                    ...prev, 
+                    [file]: { ...prev[file], [key]: val, fileName: file } 
+                }));
             };
 
             const convert = async () => {
-                const selected = Object.values(form).filter(i => i.order).sort((a,b) => a.order - b.order);
+                if (!name) return alert("Please specify a project name!");
+                if (selectedFiles.length === 0) return alert("Select at least one image!");
+
+                // Filter the form data based ONLY on the selected files
+                const payload = selectedFiles.map(file => {
+                    const data = form[file] || { fileName: file };
+                    return {
+                        fileName: file,
+                        order: data.order || 0,
+                        description: data.description || "",
+                        time: data.time || ""
+                    };
+                }).sort((a, b) => a.order - b.order);
+
                 const res = await fetch('/api/convert', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ name, selectedImages: selected })
+                    body: JSON.stringify({ name, selectedImages: payload })
                 });
-                if (res.ok) alert('Converted successfully!');
+
+                if (res.ok) alert(`Successfully processed ${selectedFiles.length} images!`);
             };
 
             return (
                 <div>
                     <div className="controls">
-                        <input placeholder="Project Name (e.g. navy-reef)" onChange={e => setName(e.target.value)} style={{width: '300px', padding: '8px'}} />
-                        <button onClick={convert} style={{padding: '8px 20px', marginLeft: '10px'}}>Convert</button>
+                        <input 
+                            placeholder="Folder Name (e.g. navy-reef)" 
+                            value={name}
+                            onChange={e => setName(e.target.value)} 
+                            style={{width: '300px', padding: '10px'}} 
+                        />
+                        <button className="btn-convert" onClick={convert}>Convert Selected ({selectedFiles.length})</button>
                     </div>
+
                     <div className="grid">
-                        {images.map(img => (
-                            <div key={img} className="card">
-                                <img src={`/preview/${img}`} />
-                                <input type="number" placeholder="Order" onChange={e => update(img, 'order', e.target.value)} />
-                                <input type="text" placeholder="Description" onChange={e => update(img, 'description', e.target.value)} />
-                                <input type="month" onChange={e => update(img, 'time', e.target.value)} />
-                            </div>
-                        ))}
+                        {images.map(img => {
+                            const isChecked = selectedFiles.includes(img);
+                            return (
+                                <div key={img} className={`card ${isChecked ? 'selected' : ''}`}>
+                                    <img src={`/preview/${img}`} onClick={() => toggleSelection(img)} />
+                                    
+                                    <div className="checkbox-container">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={isChecked} 
+                                            onChange={() => toggleSelection(img)} 
+                                        />
+                                        <span>Include Image</span>
+                                    </div>
+
+                                    {isChecked && (
+                                        <div style={{marginTop: '10px', borderTop: '1px solid #ddd'}}>
+                                            <input type="number" placeholder="Order" onChange={e => updateField(img, 'order', e.target.value)} />
+                                            <input type="text" placeholder="Description" onChange={e => updateField(img, 'description', e.target.value)} />
+                                            <input type="month" onChange={e => updateField(img, 'time', e.target.value)} />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             );
