@@ -1,4 +1,5 @@
 node_modules/
+source_images/
 dist/
 build/
 coverage/

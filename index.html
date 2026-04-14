@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Browser</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .card { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; }
+        input { width: 100%; margin-top: 5px; box-sizing: border-box; }
+        .controls { margin-bottom: 20px; background: white; padding: 20px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function App() {
+            const [images, setImages] = React.useState([]);
+            const [form, setForm] = React.useState({});
+            const [name, setName] = React.useState('');
+
+            React.useEffect(() => {
+                fetch('/api/list').then(r => r.json()).then(setImages);
+            }, []);
+
+            const update = (file, key, val) => {
+                setForm(prev => ({ ...prev, [file]: { ...prev[file], [key]: val, fileName: file } }));
+            };
+
+            const convert = async () => {
+                const selected = Object.values(form).filter(i => i.order).sort((a,b) => a.order - b.order);
+                const res = await fetch('/api/convert', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name, selectedImages: selected })
+                });
+                if (res.ok) alert('Converted successfully!');
+            };
+
+            return (
+                <div>
+                    <div className="controls">
+                        <input placeholder="Project Name (e.g. navy-reef)" onChange={e => setName(e.target.value)} style={{width: '300px', padding: '8px'}} />
+                        <button onClick={convert} style={{padding: '8px 20px', marginLeft: '10px'}}>Convert</button>
+                    </div>
+                    <div className="grid">
+                        {images.map(img => (
+                            <div key={img} className="card">
+                                <img src={`/preview/${img}`} />
+                                <input type="number" placeholder="Order" onChange={e => update(img, 'order', e.target.value)} />
+                                <input type="text" placeholder="Description" onChange={e => update(img, 'description', e.target.value)} />
+                                <input type="month" onChange={e => update(img, 'time', e.target.value)} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>

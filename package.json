@@ -1,22 +1,16 @@
 {
-    "name": "nodejs-thumbnail-generator",
+    "name": "local-image-processor",
     "version": "1.0.0",
-    "description": "A simple Node.js utility to generate image thumbnails using Sharp.",
-    "main": "index.js",
+    "description": "A simple tool to browse, tag, and resize local images.",
+    "main": "server.js",
     "scripts": {
-      "start": "node index.js",
-      "dev": "node --watch index.js"
+      "start": "node server.js"
     },
-    "keywords": [
-      "nodejs",
-      "sharp",
-      "thumbnail",
-      "image-processing",
-      "npm"
-    ],
-    "author": "",
-    "license": "ISC",
     "dependencies": {
-      "sharp": "^0.33.0"
-    }
+      "cors": "^2.8.5",
+      "express": "^4.18.2",
+      "sharp": "^0.33.2"
+    },
+    "author": "Kanchana",
+    "license": "ISC"
   }
