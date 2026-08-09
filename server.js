@@ -54,7 +54,7 @@ app.post('/api/convert', async (req, res) => {
     if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir);
 
     // Check if watermark exists
-    const hasWatermark = fs.existsSync(WATERMARK_PATH);
+    const hasWatermark = false; //fs.existsSync(WATERMARK_PATH);
 
     const jsonOutput = await Promise.all(selectedImages.map(async (item, i) => {
         const ext = path.extname(item.fileName);
