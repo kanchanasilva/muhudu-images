@@ -20,17 +20,19 @@ app.get('/', (req, res) => {
     res.send(fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8'));
 });
 
-// Replace the old app.use('/preview', ...) with this:
+const WEBP_OPTIONS = { quality: 80, effort: 6 };
+
 app.get('/preview/:filename', async (req, res) => {
     const filePath = path.join(SOURCE_FOLDER, req.params.filename);
     
     try {
-        // We resize the image to a 300px thumbnail on-the-fly for the UI
+        // Resize to a 300px WebP thumbnail on-the-fly for the UI
         const buffer = await sharp(filePath)
-            .resize(300) 
+            .resize(300)
+            .webp(WEBP_OPTIONS)
             .toBuffer();
             
-        res.set('Content-Type', 'image/jpeg'); // Standardize for preview
+        res.set('Content-Type', 'image/webp');
         res.send(buffer);
     } catch (err) {
         res.status(404).send('Image not found');
@@ -40,7 +42,7 @@ app.get('/preview/:filename', async (req, res) => {
 // 3. API: List images
 app.get('/api/list', (req, res) => {
     const files = fs.readdirSync(SOURCE_FOLDER)
-        .filter(file => /\.(jpg|jpeg|png)$/i.test(file));
+        .filter(file => /\.(jpg|jpeg|png|webp)$/i.test(file));
     res.json(files);
 });
 
@@ -57,8 +59,8 @@ app.post('/api/convert', async (req, res) => {
     const hasWatermark = false; //fs.existsSync(WATERMARK_PATH);
 
     const jsonOutput = await Promise.all(selectedImages.map(async (item, i) => {
-        const ext = path.extname(item.fileName);
         const idx = String(i + 1).padStart(2, '0');
+        const ext = '.webp';
         
         const names = {
             main: `00000-${name}-${idx}${ext}`,
@@ -68,7 +70,7 @@ app.post('/api/convert', async (req, res) => {
 
         const src = path.join(SOURCE_FOLDER, item.fileName);
 
-        // 1. Create the Main 1000px image with Watermark
+        // 1. Create the Main 1000px WebP image with Watermark
         let mainImageProcessor = sharp(src).resize({ width: 1000 });
 
         if (hasWatermark) {
@@ -80,16 +82,20 @@ app.post('/api/convert', async (req, res) => {
                 }
             ]);
         }
-        await mainImageProcessor.toFile(path.join(targetDir, names.main));
+        await mainImageProcessor
+            .webp(WEBP_OPTIONS)
+            .toFile(path.join(targetDir, names.main));
 
         // 2. Create Thumbnail (500px) - No watermark
         await sharp(src)
             .resize({ width: 500 })
+            .webp(WEBP_OPTIONS)
             .toFile(path.join(targetDir, names.thumb));
 
         // 3. Create Icon (100px) - No watermark
         await sharp(src)
             .resize({ width: 100 })
+            .webp(WEBP_OPTIONS)
             .toFile(path.join(targetDir, names.icon));
 
         return {

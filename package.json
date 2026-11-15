@@ -4,7 +4,8 @@
     "description": "A simple tool to browse, tag, and resize local images.",
     "main": "server.js",
     "scripts": {
-      "start": "node server.js"
+      "start": "node server.js",
+      "convert-hero": "node convert-hero.js"
     },
     "dependencies": {
       "cors": "^2.8.5",
