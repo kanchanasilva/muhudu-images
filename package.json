@@ -5,7 +5,8 @@
     "main": "server.js",
     "scripts": {
       "start": "node server.js",
-      "convert-hero": "node convert-hero.js"
+      "convert-hero": "node convert-hero.js",
+      "convert-logo": "node convert-logo.js"
     },
     "dependencies": {
       "cors": "^2.8.5",
