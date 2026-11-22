@@ -23,7 +23,7 @@
 
 1. Located each of the 101 `gallery.type = 'image'` `media_path` values under `./images`.
 2. Converted each JPG/PNG to a sibling `.webp` via Sharp.
-3. Deleted the original JPG/PNG (icon/thumbnail variants were not touched).
+3. Deleted the original JPG/PNG full-size sources; icons/thumbnails converted in a follow-up pass.
 4. Added migration `029_gallery_media_path_webp.sql` to rewrite `gallery.media_path` extensions to `.webp`.
 
 ## Per-site counts
@@ -152,6 +152,28 @@
 | 153 | `navy-reef/00000-navy-reef-04.JPG` | `navy-reef/00000-navy-reef-04.webp` | 176.5 → 135.7 KB |
 | 154 | `bluedeep-trinco/00000-bluedeep-trinco-01.png` | `bluedeep-trinco/00000-bluedeep-trinco-01.webp` | 1324.8 → 80.6 KB |
 | 155 | `bluedeep-trinco/00000-bluedeep-trinco-02.png` | `bluedeep-trinco/00000-bluedeep-trinco-02.webp` | 2022.6 → 100.5 KB |
+
+## Icons & thumbnails (follow-up)
+
+**No extra migration SQL.** Icons and thumbnails are **not stored in the DB**. The UI derives them from `gallery.media_path` by swapping the `00000-` prefix for `icon-` / `thumbnail-` while keeping the same extension (`ui/src/components/Gallery.jsx`). After `029_gallery_media_path_webp.sql`, the app will request `.webp` variants automatically.
+
+| Metric | Value |
+|---|---|
+| Icons converted | 101 |
+| Thumbnails converted | 101 |
+| Total variants | 202 |
+| Failed / missing | 0 |
+| Source size | 7.17 MB |
+| WebP size | 3.78 MB |
+| Space saved | 3.39 MB (47%) |
+| Typical sizes | icons ~100px wide, thumbnails ~500px wide |
+
+Machine-readable details: `images/gallery-variants-webp-conversion-report.json`.
+
+```bash
+cd images
+npm run convert-gallery-variants
+```
 
 ## Apply migration
 

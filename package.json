@@ -7,7 +7,8 @@
       "start": "node server.js",
       "convert-hero": "node convert-hero.js",
       "convert-logo": "node convert-logo.js",
-      "convert-gallery": "node convert-gallery.js"
+      "convert-gallery": "node convert-gallery.js",
+      "convert-gallery-variants": "node convert-gallery.js --list gallery-variants-convert-list.json --report gallery-variants-webp-conversion-report.json"
     },
     "dependencies": {
       "cors": "^2.8.5",

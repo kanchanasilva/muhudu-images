@@ -4,21 +4,24 @@
  * Usage:
  *   node convert-gallery.js                  # all paths in gallery-convert-list.json
  *   node convert-gallery.js path/to/img.JPG  # one or more specific relative paths
+ *   node convert-gallery.js --list gallery-variants-convert-list.json
+ *   node convert-gallery.js --report out.json
  *   node convert-gallery.js --dry-run
  *   node convert-gallery.js --keep           # write .webp but keep originals
  *
  * Outputs next to each source, e.g.:
  *   navy-museum/00000-navy-museum-01.JPG  →  navy-museum/00000-navy-museum-01.webp
  *
- * Gallery images are already ~1000px wide; we honour EXIF and do not enlarge.
+ * Gallery full images are ~1000px; icons ~100px; thumbnails ~500px.
+ * We honour EXIF and do not enlarge.
  */
 const path = require('path');
 const fs = require('fs');
 const sharp = require('sharp');
 
 const ROOT = __dirname;
-const LIST_PATH = path.join(ROOT, 'gallery-convert-list.json');
-const REPORT_JSON = path.join(ROOT, 'gallery-webp-conversion-report.json');
+const DEFAULT_LIST = path.join(ROOT, 'gallery-convert-list.json');
+const DEFAULT_REPORT = path.join(ROOT, 'gallery-webp-conversion-report.json');
 
 const MAX_WIDTH = 1600;
 const WEBP = { quality: 80, effort: 6, smartSubsample: true, alphaQuality: 100 };
@@ -26,7 +29,27 @@ const WEBP = { quality: 80, effort: 6, smartSubsample: true, alphaQuality: 100 }
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const keepOriginals = args.includes('--keep');
-const pathArgs = args.filter((a) => !a.startsWith('--'));
+
+function takeOption(flag) {
+  const i = args.indexOf(flag);
+  if (i === -1) return null;
+  const value = args[i + 1];
+  if (!value || value.startsWith('--')) {
+    throw new Error(`${flag} requires a path argument`);
+  }
+  return value;
+}
+
+const listOpt = takeOption('--list');
+const reportOpt = takeOption('--report');
+const LIST_PATH = listOpt ? path.resolve(ROOT, listOpt) : DEFAULT_LIST;
+const REPORT_JSON = reportOpt ? path.resolve(ROOT, reportOpt) : DEFAULT_REPORT;
+const pathArgs = args.filter((a, i) => {
+  if (a.startsWith('--')) return false;
+  const prev = args[i - 1];
+  if (prev === '--list' || prev === '--report') return false;
+  return true;
+});
 
 function formatBytes(n) {
   return `${(n / 1024).toFixed(1)} KB`;
@@ -37,7 +60,7 @@ function loadList() {
   if (!fs.existsSync(LIST_PATH)) {
     throw new Error(
       `No paths given and list not found: ${LIST_PATH}\n` +
-        'Pass relative media_path args, or create gallery-convert-list.json'
+        'Pass relative media_path args, or create a convert list JSON'
     );
   }
   const list = JSON.parse(fs.readFileSync(LIST_PATH, 'utf8'));
