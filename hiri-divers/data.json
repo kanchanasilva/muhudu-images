@@ -1,0 +1,20 @@
+[
+  {
+    "image": "hiri-divers/00000-hiri-divers-01.webp",
+    "order": 1,
+    "description": "Hiri Divers",
+    "time": "2026-02"
+  },
+  {
+    "image": "hiri-divers/00000-hiri-divers-02.webp",
+    "order": 2,
+    "description": "Hiri Divers",
+    "time": "2026-11"
+  },
+  {
+    "image": "hiri-divers/00000-hiri-divers-03.webp",
+    "order": 3,
+    "description": "Hiri Divers",
+    "time": "2026-02"
+  }
+]
