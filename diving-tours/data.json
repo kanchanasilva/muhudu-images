@@ -1,0 +1,20 @@
+[
+  {
+    "image": "diving-tours/00000-diving-tours-01.webp",
+    "order": 1,
+    "description": "Diving Tours",
+    "time": "2024-05"
+  },
+  {
+    "image": "diving-tours/00000-diving-tours-02.webp",
+    "order": 2,
+    "description": "Diving Tours",
+    "time": "2025-02"
+  },
+  {
+    "image": "diving-tours/00000-diving-tours-03.webp",
+    "order": 3,
+    "description": "Diving Tours",
+    "time": "2020-01"
+  }
+]
